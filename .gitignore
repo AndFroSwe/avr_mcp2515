@@ -1,0 +1,7 @@
+# Vim
+*.swp
+
+# Comilpilation
+*.hex
+*.elf
+*.o
