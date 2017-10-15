@@ -17,14 +17,15 @@ int main(int argc, char *argv[])
     spi_master_init();
 
     // Initialize CAN
-    mcp2515_reset(spi_cs);
+    mcp2515_init(spi_cs);
 
     // Send as test
     char c = 0;
     while (1)
     {
         _delay_ms(100);
-        spi_master_readwrite(c++);
+        /*spi_master_readwrite(0x60);*/
+        mcp2515_init(spi_cs);
     }
 
 
@@ -86,6 +87,18 @@ int digital_write(io_pin p, int s)
 }
 
 /* MCP2515 functions */
+void mcp2515_init(io_pin cs)
+{
+    // Set up mcp
+    mcp2515_reset(cs);
+    mcp2515_setmode(MCP2515_MODE_CONFIG, cs);
+    mcp2515_set_baud(1, cs); // 1 is dummy value for now
+    // Init receive buffers
+    // Init transmit buffers
+    // Set interrupt mode
+    mcp2515_setmode(MCP2515_MODE_NORMAL, cs);
+}
+
 void mcp2515_reset(io_pin cs)
 {
     // Reset mcp
@@ -93,7 +106,7 @@ void mcp2515_reset(io_pin cs)
     spi_master_readwrite(MCP2515_RESET);
     digital_write(cs, HIGH);
 }
-void mcp2515_write_reg(uint8_t reg, uint8_t cmd, io_pin cs)
+void mcp2515_set_reg(uint8_t reg, uint8_t cmd, io_pin cs)
 {
     // Write cmd to register reg
     digital_write(cs, LOW);
@@ -114,5 +127,29 @@ void mcp2515_bit_modify(uint8_t reg, uint8_t mask, uint8_t cmd, io_pin cs)
     spi_master_readwrite(reg); // Send register adress
     spi_master_readwrite(mask); // Send mask
     spi_master_readwrite(cmd); // Send register value to write
+    digital_write(cs, HIGH);
+}
+
+void mcp2515_setmode(const uint8_t mode, io_pin cs)
+{
+    // Sets the mcp into chosen mode
+    digital_write(cs, LOW);
+    _delay_us(CS_WAIT);
+    spi_master_readwrite(MCP2515_BIT_MOD);
+    spi_master_readwrite(MCP2515_MODE_REG);
+    spi_master_readwrite(MCP2515_MODE_MASK);
+    spi_master_readwrite(mode);
+    digital_write(cs, HIGH);
+}
+
+void mcp2515_set_baud(const uint8_t rate, io_pin cs)
+{
+    // Sets baud rate of CAN network
+    // NOTE: This only sets one speed at this point
+    digital_write(cs, LOW);
+    _delay_us(CS_WAIT);
+    mcp2515_set_reg(MCP2515_CNF1_REG, MCP2515_CAN_100kBPS_CFG1, cs);
+    mcp2515_set_reg(MCP2515_CNF2_REG, MCP2515_CAN_100kBPS_CFG2, cs);
+    mcp2515_set_reg(MCP2515_CNF3_REG, MCP2515_CAN_100kBPS_CFG3, cs);
     digital_write(cs, HIGH);
 }

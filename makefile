@@ -1,5 +1,5 @@
 CC = avr-gcc
-CFLAGS = -Wall -O2
+CFLAGS = -Wall -O2 -fdiagnostics-color=always
 OBJCOPY = avr-objcopy
 MCU = atmega328p
 
@@ -24,6 +24,6 @@ flash:
 
 # Utils
 clean:
-	rm *.o *.elf *.hex -rf
+	rm ./obj/*.o ./obj/*.elf ./build/*.hex -rf
 
 .PHONY: all clean flash
